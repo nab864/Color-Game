@@ -5,10 +5,29 @@ import random
 
 class Background:
     def __init__(self):
-        self.start = True
-
-    def start_background(self, display):
         pass
+    def start_background(self, display):
+        topleft = (0, 0, 960, 540)
+        topright = (960, 0, 960, 540)
+        bottomleft = (0, 540, 960, 540)
+        bottomright = (960, 540, 960, 540)
+        pygame.draw.rect(display, [250, 250, 250], topleft)
+        pygame.draw.rect(display, [250, 0, 0], topright)
+        pygame.draw.rect(display, [0, 250, 0], bottomleft)
+        pygame.draw.rect(display, [0, 0, 250], bottomright)
+
+        # creates the font object for the score and renders it
+        font = pygame.font.Font(size=100)
+        correct_color = font.render('Start', True, (255, 255, 255))
+        # creates a new surface that is black and blit the correct_color onto it
+        temp_surface = pygame.Surface(correct_color.get_size())
+        temp_surface.fill((0, 0, 0))
+        temp_surface.blit(correct_color, (0, 0))
+        # blit the temp_surface onto the main screen
+        temp_surface_rect = correct_color.get_rect(center=(1920 / 2, 1080 / 2))
+        display.blit(temp_surface, temp_surface_rect)
+
+        pygame.display.update()
 
 
     def set_background(self, display, match_object):
@@ -36,6 +55,7 @@ class Background:
         temp_surface.blit(correct_color, (0, 0))
         # blit the temp_surface onto the main screen
         temp_surface_rect = correct_color.get_rect(center=(1920 / 2, 1080 / 2))
+        print(temp_surface_rect)
         display.blit(temp_surface, temp_surface_rect)
         pygame.display.update()
 
@@ -59,13 +79,19 @@ class Match:
         self.color_order = [white, red, green, blue]
         self.str_color_list = ['white', 'red', 'green', 'blue']
         self.count = 0
-
+        self.start = True
     def __str__(self):
         return str(self.count)
 
     def correct_choice(self):
         self.count += 1
 
+    def start_button(self):
+        if 868 < pygame.mouse.get_pos()[0] < 868 + 184 and \
+                506 < pygame.mouse.get_pos()[1] < 506 + 68:
+            return True
+        else:
+            return False
     def round(self):
         if self.correct_corner[0] < pygame.mouse.get_pos()[0] < self.correct_corner[0] + self.correct_corner[2] and \
                 self.correct_corner[1] < pygame.mouse.get_pos()[1] < self.correct_corner[1] + self.correct_corner[3]:
@@ -92,7 +118,7 @@ def main():
     match = Match()
     match.randomizer()
     # defines the corner borders and the initial colors in each corner
-    background.set_background(screen, match)
+    background.start_background(screen)
 
     clock = pygame.time.Clock()
     gameloop = True
@@ -104,11 +130,17 @@ def main():
                 gameloop = False
             # performs these actions if the mouse button is pressed and the mouse.get_pos is within the values set by match.round()
             elif event.type == MOUSEBUTTONDOWN:
-                if match.round():
+                if match.round() and not match.start:
                     # adds 1 to the scoreboard
                     match.correct_choice()
                     # changes what the correct corner is and changes the color of each corner
                     match.randomizer()
+                    # changes the color of each corner
+                    background.set_background(screen, match)
+                elif match.start_button():
+                    # changes what the correct corner is and changes the color of each corner
+                    match.randomizer()
+                    match.start = False
                     # changes the color of each corner
                     background.set_background(screen, match)
 main()
