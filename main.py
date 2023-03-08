@@ -3,19 +3,45 @@ from pygame.locals import *
 import random
 
 
-
-#Tracks the score
-class Counter():
+class Background:
     def __init__(self):
-        self.count = 0
-    def __str__(self):
-        return str(self.count)
-    def correct_choice(self):
-        self.count += 1
+        self.start = True
+
+    def start_background(self, display):
+        pass
+
+
+    def set_background(self, display, match_object):
+        # Sets the colors in each corner
+        topleft = (0, 0, 960, 540)
+        topright = (960, 0, 960, 540)
+        bottomleft = (0, 540, 960, 540)
+        bottomright = (960, 540, 960, 540)
+        pygame.draw.rect(display, match_object.color_order[0], topleft)
+        pygame.draw.rect(display, match_object.color_order[1], topright)
+        pygame.draw.rect(display, match_object.color_order[2], bottomleft)
+        pygame.draw.rect(display, match_object.color_order[3], bottomright)
+
+        # creates the font object for the score and renders it
+        font = pygame.font.Font(size=100)
+        score_text = font.render(f'Score: {match_object}', True, (0, 0, 0))
+        display.blit(score_text, (10, 10))
+
+        # creates the font object for the correct color and renders it
+        font2 = pygame.font.Font(size=100)
+        correct_color = font2.render(f'{match_object.correct_color}', True, (255, 255, 255))
+        # creates a new surface that is black and blit the correct_color onto it
+        temp_surface = pygame.Surface(correct_color.get_size())
+        temp_surface.fill((0, 0, 0))
+        temp_surface.blit(correct_color, (0, 0))
+        # blit the temp_surface onto the main screen
+        temp_surface_rect = correct_color.get_rect(center=(1920 / 2, 1080 / 2))
+        display.blit(temp_surface, temp_surface_rect)
+        pygame.display.update()
 
 # def round sets the boundaries that need to be clicked to get a point
 # def randomizer randomly chooses the correct corner/color and also randomly changes what color is in each corner
-class Match():
+class Match:
     def __init__(self):
         # sets the boundaries of each corner for def round
         topleft = [0, 0, 960, 540]
@@ -32,6 +58,13 @@ class Match():
         blue = [0, 0, 250]
         self.color_order = [white, red, green, blue]
         self.str_color_list = ['white', 'red', 'green', 'blue']
+        self.count = 0
+
+    def __str__(self):
+        return str(self.count)
+
+    def correct_choice(self):
+        self.count += 1
 
     def round(self):
         if self.correct_corner[0] < pygame.mouse.get_pos()[0] < self.correct_corner[0] + self.correct_corner[2] and \
@@ -48,30 +81,18 @@ class Match():
         self.correct_corner = self.corner_list[r]
         self.correct_color = self.str_color_list[r]
 
-
-
 def main():
     pygame.init()
     pygame.font.init()
 
     screen = pygame.display.set_mode((1920, 1080))
     pygame.display.set_caption("Practice")
-    # defines the Counter() and Match() objects and performs an initial randomizer
-    score = Counter()
+    # defines the Match() object and performs an initial randomizer
+    background = Background()
     match = Match()
     match.randomizer()
     # defines the corner borders and the initial colors in each corner
-    topleft = (0, 0, 960, 540)
-    topright = (960, 0, 960, 540)
-    bottomleft = (0, 540, 960, 540)
-    bottomright = (960, 540, 960, 540)
-    pygame.draw.rect(screen, match.color_order[0], topleft)
-    pygame.draw.rect(screen, match.color_order[1], topright)
-    pygame.draw.rect(screen, match.color_order[2], bottomleft)
-    pygame.draw.rect(screen, match.color_order[3], bottomright)
-
-
-    pygame.display.update()
+    background.set_background(screen, match)
 
     clock = pygame.time.Clock()
     gameloop = True
@@ -85,32 +106,9 @@ def main():
             elif event.type == MOUSEBUTTONDOWN:
                 if match.round():
                     # adds 1 to the scoreboard
-                    score.correct_choice()
+                    match.correct_choice()
                     # changes what the correct corner is and changes the color of each corner
                     match.randomizer()
                     # changes the color of each corner
-                    pygame.draw.rect(screen, match.color_order[0], topleft)
-                    pygame.draw.rect(screen, match.color_order[1], topright)
-                    pygame.draw.rect(screen, match.color_order[2], bottomleft)
-                    pygame.draw.rect(screen, match.color_order[3], bottomright)
-        # creates the font object for the scoreboard and renders it
-        font = pygame.font.Font(size=100)
-        score_text = font.render(f'Score: {score}', True, (0, 0, 0))
-        screen.blit(score_text, (10, 10))
-        # creates the font object for the correct color and renders it
-        font2 = pygame.font.Font(size=100)
-        correct_color = font2.render(f'{match.correct_color}', True, (255, 255, 255))
-
-        # creates a new surface that is black and blit the correct_color onto it
-        temp_surface = pygame.Surface(correct_color.get_size())
-        temp_surface.fill((0, 0, 0))
-        temp_surface.blit(correct_color, (0,0))
-
-        # blit the temp_surface onto the main screen
-        temp_surface_rect = correct_color.get_rect(center=(1920 / 2, 1080 / 2))
-        screen.blit(temp_surface, temp_surface_rect)
-        # refreshes the screen with the changes
-        pygame.display.update()
-
-
+                    background.set_background(screen, match)
 main()
