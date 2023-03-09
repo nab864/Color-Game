@@ -6,6 +6,20 @@ import random
 class Background:
     def __init__(self):
         pass
+
+    def start_hover(self, display):
+        font = pygame.font.Font(size=100)
+        correct_color = font.render('Start', True, (255, 255, 255))
+        # creates a new surface that is black and blit the correct_color onto it
+        temp_surface = pygame.Surface(correct_color.get_size())
+        temp_surface.fill((0, 0, 255))
+        temp_surface.blit(correct_color, (0, 0))
+        # blit the temp_surface onto the main screen
+        temp_surface_rect = correct_color.get_rect(center=(1920 / 2, 1080 / 2))
+        display.blit(temp_surface, temp_surface_rect)
+
+        pygame.display.update()
+
     def start_background(self, display):
         topleft = (0, 0, 960, 540)
         topright = (960, 0, 960, 540)
@@ -16,7 +30,7 @@ class Background:
         pygame.draw.rect(display, [0, 250, 0], bottomleft)
         pygame.draw.rect(display, [0, 0, 250], bottomright)
 
-        # creates the font object for the score and renders it
+        # creates the font object for the start and renders it
         font = pygame.font.Font(size=100)
         correct_color = font.render('Start', True, (255, 255, 255))
         # creates a new surface that is black and blit the correct_color onto it
@@ -55,7 +69,6 @@ class Background:
         temp_surface.blit(correct_color, (0, 0))
         # blit the temp_surface onto the main screen
         temp_surface_rect = correct_color.get_rect(center=(1920 / 2, 1080 / 2))
-        print(temp_surface_rect)
         display.blit(temp_surface, temp_surface_rect)
         pygame.display.update()
 
@@ -123,24 +136,34 @@ def main():
     clock = pygame.time.Clock()
     gameloop = True
     while gameloop:
-        clock.tick(60)
+        clock.tick(100)
         for event in pygame.event.get():
             # Stops the game when the quit button in the corner is pressed
             if event.type == QUIT:
                 gameloop = False
             # performs these actions if the mouse button is pressed and the mouse.get_pos is within the values set by match.round()
-            elif event.type == MOUSEBUTTONDOWN:
-                if match.round() and not match.start:
+            elif match.start_button() and match.start:
+                background.start_hover(screen)
+                if event.type == MOUSEBUTTONDOWN:
+                # changes what the correct corner is and changes the color of each corner
+                    match.randomizer()
+                    match.start = False
+                    # changes the color of each corner
+                    background.set_background(screen, match)
+            elif match.round() and not match.start:
+                if event.type == MOUSEBUTTONDOWN:
                     # adds 1 to the scoreboard
                     match.correct_choice()
                     # changes what the correct corner is and changes the color of each corner
                     match.randomizer()
                     # changes the color of each corner
                     background.set_background(screen, match)
-                elif match.start_button():
-                    # changes what the correct corner is and changes the color of each corner
-                    match.randomizer()
-                    match.start = False
-                    # changes the color of each corner
-                    background.set_background(screen, match)
+            elif match.start and not match.start_button():
+                background.start_background(screen)
+            elif event.type == KEYDOWN:
+                if event.key == K_r:
+                    background.start_background(screen)
+                    match.count = 0
+
+
 main()
