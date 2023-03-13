@@ -3,13 +3,25 @@ from pygame.locals import *
 import random
 
 
-class Background:
+class Game():
     def __init__(self):
-        pass
+        self.topleft = (0, 0, 960, 540)
+        self.topright = (960, 0, 960, 540)
+        self.bottomleft = (0, 540, 960, 540)
+        self.bottomright = (960, 540, 960, 540)
+        self.white = [255, 255, 255]
+        self.red = [255, 0, 0]
+        self.green = [0, 255, 0]
+        self.blue = [0, 0, 255]
+
+
+class Background(Game):
+    def __init__(self):
+        super(Background, self).__init__()
 
     def start_hover(self, display):
         font = pygame.font.Font(size=100)
-        correct_color = font.render('Start', True, (255, 255, 255))
+        correct_color = font.render('Start', True, self.white)
         # creates a new surface that is black and blit the correct_color onto it
         temp_surface = pygame.Surface(correct_color.get_size())
         temp_surface.fill((0, 0, 255))
@@ -21,18 +33,14 @@ class Background:
         pygame.display.update()
 
     def start_background(self, display):
-        topleft = (0, 0, 960, 540)
-        topright = (960, 0, 960, 540)
-        bottomleft = (0, 540, 960, 540)
-        bottomright = (960, 540, 960, 540)
-        pygame.draw.rect(display, [250, 250, 250], topleft)
-        pygame.draw.rect(display, [250, 0, 0], topright)
-        pygame.draw.rect(display, [0, 250, 0], bottomleft)
-        pygame.draw.rect(display, [0, 0, 250], bottomright)
+        pygame.draw.rect(display, self.white, self.topleft)
+        pygame.draw.rect(display, self.red, self.topright)
+        pygame.draw.rect(display, self.green, self.bottomleft)
+        pygame.draw.rect(display, self.blue, self.bottomright)
 
         # creates the font object for the start and renders it
         font = pygame.font.Font(size=100)
-        correct_color = font.render('Start', True, (255, 255, 255))
+        correct_color = font.render('Start', True, self.white)
         # creates a new surface that is black and blit the correct_color onto it
         temp_surface = pygame.Surface(correct_color.get_size())
         temp_surface.fill((0, 0, 0))
@@ -43,17 +51,12 @@ class Background:
 
         pygame.display.update()
 
-
     def set_background(self, display, match_object):
         # Sets the colors in each corner
-        topleft = (0, 0, 960, 540)
-        topright = (960, 0, 960, 540)
-        bottomleft = (0, 540, 960, 540)
-        bottomright = (960, 540, 960, 540)
-        pygame.draw.rect(display, match_object.color_order[0], topleft)
-        pygame.draw.rect(display, match_object.color_order[1], topright)
-        pygame.draw.rect(display, match_object.color_order[2], bottomleft)
-        pygame.draw.rect(display, match_object.color_order[3], bottomright)
+        pygame.draw.rect(display, match_object.color_order[0], self.topleft)
+        pygame.draw.rect(display, match_object.color_order[1], self.topright)
+        pygame.draw.rect(display, match_object.color_order[2], self.bottomleft)
+        pygame.draw.rect(display, match_object.color_order[3], self.bottomright)
 
         # creates the font object for the score and renders it
         font = pygame.font.Font(size=100)
@@ -72,27 +75,22 @@ class Background:
         display.blit(temp_surface, temp_surface_rect)
         pygame.display.update()
 
+
 # def round sets the boundaries that need to be clicked to get a point
 # def randomizer randomly chooses the correct corner/color and also randomly changes what color is in each corner
-class Match:
+class Match(Game):
     def __init__(self):
+        super(Match, self).__init__()
         # sets the boundaries of each corner for def round
-        topleft = [0, 0, 960, 540]
-        topright = [960, 0, 960, 540]
-        bottomleft = [0, 540, 960, 540]
-        bottomright = [960, 540, 960, 540]
-        self.corner_list = [topleft, topright, bottomleft, bottomright]
-        #empty list to be filled in by def randomizer
+        self.corner_list = [self.topleft, self.topright, self.bottomleft, self.bottomright]
+        # empty list to be filled in by def randomizer
         self.correct_corner = []
-        # Give the rgb value associated with each color
-        white = [250, 250, 250]
-        red = [250, 0, 0]
-        green = [0, 250, 0]
-        blue = [0, 0, 250]
-        self.color_order = [white, red, green, blue]
+
+        self.color_order = [self.white, self.red, self.green, self.blue]
         self.str_color_list = ['white', 'red', 'green', 'blue']
         self.count = 0
         self.start = True
+
     def __str__(self):
         return str(self.count)
 
@@ -105,6 +103,7 @@ class Match:
             return True
         else:
             return False
+
     def round(self):
         if self.correct_corner[0] < pygame.mouse.get_pos()[0] < self.correct_corner[0] + self.correct_corner[2] and \
                 self.correct_corner[1] < pygame.mouse.get_pos()[1] < self.correct_corner[1] + self.correct_corner[3]:
@@ -120,50 +119,67 @@ class Match:
         self.correct_corner = self.corner_list[r]
         self.correct_color = self.str_color_list[r]
 
+
+
+
+pygame.init()
+pygame.font.init()
+
+screen = pygame.display.set_mode((1920, 1080))
+pygame.display.set_caption("Practice")
+# defines the Match() object and performs an initial randomizer
+background = Background()
+match = Match()
+match.randomizer()
+# defines the corner borders and the initial colors in each corner
+background.start_background(screen)
+
+clock = pygame.time.Clock()
+gameloop = True
+
+def match_loop():
+    for event in pygame.event.get():
+        # Stops the game when the quit button in the corner is pressed
+        if event.type == QUIT:
+            global gameloop
+            gameloop = False
+        elif event.type == MOUSEBUTTONDOWN:
+            # adds 1 to the scoreboard
+            match.correct_choice()
+            # changes what the correct corner is and changes the color of each corner
+            match.randomizer()
+            # changes the color of each corner
+            background.set_background(screen, match)
+        elif event.type == KEYDOWN:
+            if event.key == K_r:
+                background.start_background(screen)
+                match.count = 0
+                match.start = True
+                break
+
+def start_loop():
+    if not match.start_button():
+        background.start_background(screen)
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            global gameloop
+            gameloop = False
+        # performs these actions if the mouse button is pressed and the mouse.get_pos is within the values set by match.round()
+        elif match.start_button():
+            background.start_hover(screen)
+            if event.type == MOUSEBUTTONDOWN:
+                # changes what the correct corner is and changes the color of each corner
+                match.randomizer()
+                # changes the color of each corner
+                background.set_background(screen, match)
+                match.start = False
+
 def main():
-    pygame.init()
-    pygame.font.init()
-
-    screen = pygame.display.set_mode((1920, 1080))
-    pygame.display.set_caption("Practice")
-    # defines the Match() object and performs an initial randomizer
-    background = Background()
-    match = Match()
-    match.randomizer()
-    # defines the corner borders and the initial colors in each corner
-    background.start_background(screen)
-
-    clock = pygame.time.Clock()
-    gameloop = True
     while gameloop:
         clock.tick(100)
-        for event in pygame.event.get():
-            # Stops the game when the quit button in the corner is pressed
-            if event.type == QUIT:
-                gameloop = False
-            # performs these actions if the mouse button is pressed and the mouse.get_pos is within the values set by match.round()
-            elif match.start_button() and match.start:
-                background.start_hover(screen)
-                if event.type == MOUSEBUTTONDOWN:
-                # changes what the correct corner is and changes the color of each corner
-                    match.randomizer()
-                    match.start = False
-                    # changes the color of each corner
-                    background.set_background(screen, match)
-            elif match.round() and not match.start:
-                if event.type == MOUSEBUTTONDOWN:
-                    # adds 1 to the scoreboard
-                    match.correct_choice()
-                    # changes what the correct corner is and changes the color of each corner
-                    match.randomizer()
-                    # changes the color of each corner
-                    background.set_background(screen, match)
-            elif match.start and not match.start_button():
-                background.start_background(screen)
-            elif event.type == KEYDOWN:
-                if event.key == K_r:
-                    background.start_background(screen)
-                    match.count = 0
-
+        if match.start:
+            start_loop()
+        else:
+            match_loop()
 
 main()
