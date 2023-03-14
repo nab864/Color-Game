@@ -51,7 +51,7 @@ class Background(Game):
 
         pygame.display.update()
 
-    def set_background(self, display, match_object):
+    def set_background(self, display, match_object, timer):
         # Sets the colors in each corner
         pygame.draw.rect(display, match_object.color_order[0], self.topleft)
         pygame.draw.rect(display, match_object.color_order[1], self.topright)
@@ -63,9 +63,12 @@ class Background(Game):
         score_text = font.render(f'Score: {match_object}', True, (0, 0, 0))
         display.blit(score_text, (10, 10))
 
+        timer_text = font.render(f'Timer: {timer}', True, (0, 0, 0))
+        display.blit(timer_text, (1500, 10))
+
         # creates the font object for the correct color and renders it
-        font2 = pygame.font.Font(size=100)
-        correct_color = font2.render(f'{match_object.correct_color}', True, (255, 255, 255))
+        font = pygame.font.Font(size=100)
+        correct_color = font.render(f'{match_object.correct_color}', True, (255, 255, 255))
         # creates a new surface that is black and blit the correct_color onto it
         temp_surface = pygame.Surface(correct_color.get_size())
         temp_surface.fill((0, 0, 0))
@@ -74,7 +77,6 @@ class Background(Game):
         temp_surface_rect = correct_color.get_rect(center=(1920 / 2, 1080 / 2))
         display.blit(temp_surface, temp_surface_rect)
         pygame.display.update()
-
 
 # def round sets the boundaries that need to be clicked to get a point
 # def randomizer randomly chooses the correct corner/color and also randomly changes what color is in each corner
@@ -119,14 +121,14 @@ class Match(Game):
         self.correct_corner = self.corner_list[r]
         self.correct_color = self.str_color_list[r]
 
-
-
-
 pygame.init()
 pygame.font.init()
 
 screen = pygame.display.set_mode((1920, 1080))
 pygame.display.set_caption("Practice")
+
+pygame.time.set_timer(pygame.USEREVENT, 1000)
+counter, text = 30, '30'
 # defines the Match() object and performs an initial randomizer
 background = Background()
 match = Match()
@@ -143,19 +145,30 @@ def match_loop():
         if event.type == QUIT:
             global gameloop
             gameloop = False
+        if event.type == pygame.USEREVENT:
+            global counter
+            counter -= 1
+            global text
+            text = str(counter) if counter > 0 else 'boom!'
+            background.set_background(screen, match, counter)
+            if counter == 0:
+                counter = 30
+                match.count = 0
+                match.start = True
+                break
         elif event.type == MOUSEBUTTONDOWN:
             # adds 1 to the scoreboard
             match.correct_choice()
             # changes what the correct corner is and changes the color of each corner
             match.randomizer()
             # changes the color of each corner
-            background.set_background(screen, match)
+            background.set_background(screen, match, counter)
         elif event.type == KEYDOWN:
             if event.key == K_r:
-                background.start_background(screen)
+                counter = 30
                 match.count = 0
                 match.start = True
-                break
+
 
 def start_loop():
     if not match.start_button():
@@ -171,7 +184,7 @@ def start_loop():
                 # changes what the correct corner is and changes the color of each corner
                 match.randomizer()
                 # changes the color of each corner
-                background.set_background(screen, match)
+                background.set_background(screen, match, counter)
                 match.start = False
 
 def main():
